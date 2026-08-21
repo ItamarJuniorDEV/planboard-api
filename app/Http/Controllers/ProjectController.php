@@ -20,7 +20,7 @@ class ProjectController extends Controller
         $orderBy = $validate['order_by'] ?? 'created_at';
         $direction = $validate['direction'] ?? 'desc';
 
-        $query = Project::select([
+        $query = Project::where('user_id', $request->user()->id)->select([
             'id',
             'user_id',
             'title',

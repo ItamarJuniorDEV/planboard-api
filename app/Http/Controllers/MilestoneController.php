@@ -14,6 +14,8 @@ class MilestoneController extends Controller
 {
     public function index(IndexMilestoneRequest $request, Project $project)
     {
+        $this->authorize('view', $project);
+
         $validated = $request->validated();
 
         $orderBy = $validated['order_by'] ?? 'created_at';

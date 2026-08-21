@@ -18,6 +18,8 @@ class TaskController extends Controller
 {
     public function index(IndexTaskRequest $request, Project $project)
     {
+        $this->authorize('view', $project);
+
         $validate = $request->validated();
 
         $perPage = $validate['per_page'] ?? 10;
