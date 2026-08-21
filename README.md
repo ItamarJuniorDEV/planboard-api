@@ -3,93 +3,106 @@
 ![CI](https://github.com/ItamarJuniorDEV/planboard-api/actions/workflows/ci.yml/badge.svg)
 ![License](https://img.shields.io/badge/License-MIT-green)
 
-API REST em Laravel 12 para gestão de projetos em quadros kanban. Cobre a hierarquia de projeto, quadro, coluna, tarefa, subtarefa, comentário, marco e etiqueta, com autenticação via Sanctum, autorização por dono do recurso e algumas operações em lote.
+API REST para gerenciamento de projetos em estrutura kanban, com autenticação, autorização por recurso, operações em lote e estatísticas por projeto.
 
-## Motivação
+## Funcionalidades
 
-Fiz esse projeto como exercício pessoal pra praticar Laravel 12 em algo um pouco maior que um CRUD de blog. Queria entender como modelar uma hierarquia razoável de recursos (projeto contendo quadros, quadros contendo colunas, colunas e tarefas no mesmo projeto) sem deixar o controle de acesso vazar pelas beiradas. A regra de "só o dono ou um admin mexe" é simples de falar e chata de garantir em rotas aninhadas, então foi um bom motivo pra estudar Policies a sério, Form Requests com `authorize()` real e route model binding com `scopeBindings()`.
-
-A escolha do domínio kanban veio porque me dá vários ganchos para praticar coisas que normalmente fingem ser tutoriais: cache de query quente (estatísticas do projeto), operações em lote (mover várias tarefas de coluna de uma vez), validação cruzada de recursos (a coluna destino tem que ser do mesmo projeto da tarefa). E ainda permite gerar uma documentação OpenAPI decente sem ter que escrever annotation a annotation.
+- gerenciamento de projetos, quadros e colunas;
+- tarefas com prioridade, status e movimentação entre colunas;
+- subtarefas, comentários, marcos e etiquetas;
+- operações em lote para tarefas, subtarefas e comentários;
+- estatísticas de tarefas, subtarefas e marcos por projeto;
+- autenticação com Laravel Sanctum;
+- gerenciamento de usuários com operações administrativas.
 
 ## Stack
 
-- PHP 8.3
-- Laravel 12
-- Laravel Sanctum 4 (autenticação por token e por sessão SPA)
-- MySQL 8 em produção, SQLite em memória nos testes
-- PHPUnit 11.5
-- dedoc/scramble para gerar OpenAPI a partir dos tipos PHP
+| Camada | Tecnologia |
+|---|---|
+| Backend | PHP 8.3+, Laravel 12 |
+| Autenticação | Laravel Sanctum |
+| Banco | MySQL 8 / SQLite |
+| Documentação | Dedoc Scramble / OpenAPI |
+| Testes | PHPUnit 11 |
+| Infra | Docker, GitHub Actions |
 
 ## Como rodar
 
-Com Docker (o `docker-compose.yml` sobe MySQL 8 e phpMyAdmin):
+O projeto vem configurado para usar SQLite localmente por padrão.
 
-    git clone https://github.com/ItamarJuniorDEV/planboard-api.git
-    cd planboard-api
-    cp .env.example .env
-    docker compose up -d
-    composer install
-    php artisan key:generate
-    php artisan migrate --seed
-    php artisan serve
+```bash
+git clone https://github.com/ItamarJuniorDEV/planboard-api.git
+cd planboard-api
+composer install
+cp .env.example .env
+php artisan key:generate
+php artisan migrate --seed
+php artisan serve
+```
 
-O phpMyAdmin fica em `http://localhost:8888` com as credenciais do `.env`.
+A API fica disponível em `http://localhost:8000/api`.
 
-Sem Docker (basta um MySQL local ou SQLite):
+A documentação interativa fica em:
 
-    cp .env.example .env
-    composer install
-    php artisan key:generate
-    php artisan migrate --seed
-    php artisan serve
+```text
+http://localhost:8000/docs/api
+```
 
-Pra usar SQLite ao invés de MySQL, é só deixar `DB_CONNECTION=sqlite` no `.env` e criar o arquivo `database/database.sqlite`.
+### MySQL com Docker
 
-## Decisões de arquitetura
+O `docker-compose.yml` disponibiliza MySQL 8 na porta `3309` e phpMyAdmin na porta `8888`.
 
-Optei por Sanctum em vez de Passport. A API não expõe OAuth para clientes de terceiros, ela atende um frontend próprio (ou o Postman do dev). Sanctum cobre os dois cenários úteis aqui: token bearer para clientes mobile/CLI e cookie de sessão para SPA na mesma origem. Passport seria over-engineering pra esse caso.
+```bash
+docker compose up -d
+```
 
-A autorização mora em Policies por recurso, uma por modelo de domínio, com `Gate::before` no `AppServiceProvider` liberando admin em tudo, com uma exceção deliberada: admin não pode deletar `User` via API. Sem essa exceção, qualquer admin chamando `DELETE /api/users/me` apagaria a própria conta. As Form Requests por ação chamam `$this->user()->can('verb', $this->route('model'))` dentro de `authorize()`, então quem chega no controller já passou pela policy. Não tem `return true` mentiroso em Form Request.
+Para usar o MySQL, ajuste no `.env`:
 
-Todas as rotas aninhadas usam `scopeBindings()`. Isso significa que `/api/projects/{project}/boards/{board}` só resolve o board se ele realmente pertencer àquele projeto. Sem `scopeBindings`, um usuário poderia mandar `/api/projects/1/boards/999` e o Laravel devolveria o board 999 mesmo que ele seja de outro projeto, abrindo a porta pra IDOR. Com `scopeBindings`, o 404 vem antes do controller.
+```env
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3309
+DB_DATABASE=planboard
+DB_USERNAME=planboard
+DB_PASSWORD=<sua_senha>
+DB_ROOT_PASSWORD=<senha_root>
+```
 
-Resposta sempre serializa via API Resource. Mesmo nos endpoints paginados o envelope `data` é preservado, porque a chamada é `Resource::collection($paginator)->resource = $paginator`, o que mantém `meta` e `links` da paginação no nível raiz e o array de recursos dentro de `data`.
+## Autenticação e autorização
 
-Decidi não introduzir Repository pattern. O projeto é médio-pequeno, Eloquent direto no controller resolve, e criar interface pra uma implementação só não faz sentido aqui. Mesma coisa com Service ou Action: não tem lógica de negócio que mereça classe própria.
+O login utiliza Laravel Sanctum e possui rate limiting específico. As demais rotas da API exigem autenticação.
 
-Também não subi infraestrutura de Queue. A API não manda email, não gera PDF, não chama webhook externo. Nada que precise rodar fora do request-response.
+A listagem de projetos é restrita ao usuário autenticado. Operações sobre recursos individuais passam por Policies, e as rotas aninhadas utilizam `scopeBindings()` para garantir que quadros, colunas, tarefas e outros recursos sejam resolvidos dentro do projeto informado.
 
-Existe um único ponto de cache: `project:{id}:stats` com TTL de 60 segundos. As estatísticas são a consulta mais cara do projeto (agrega tarefas por status, prioridade, progresso de subtarefas, marcos em atraso) e mudam pouco em relação à frequência com que a dashboard pede. A invalidação é explícita via Observer `InvalidatesProjectStats` registrado em Task, Subtask e Milestone, então qualquer save ou delete nessas entidades zera a chave correspondente.
+Usuários com papel administrativo podem gerenciar usuários pelas rotas protegidas correspondentes.
 
-Segurança transversal: rate limit de 60 por minuto no grupo `api` (chave por user id, ou IP quando não autenticado), 5 por minuto no `login` (chave por email + IP, suficiente pra travar brute force sem trancar legítimos). Middleware `SecurityHeaders` aplicado em todo o grupo API com `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, `Referrer-Policy: strict-origin-when-cross-origin`, `Permissions-Policy` restritivo, `Content-Security-Policy: default-src 'none'; frame-ancestors 'none'` (a API só devolve JSON, então CSP pode ser bem fechado) e HSTS condicional a produção + HTTPS. CORS com origens explícitas em `config/cors.php`, sem wildcard, porque `supports_credentials=true`. O login usa `Timebox::call(..., 500_000)` e mensagem uniforme `Credenciais inválidas` pra não vazar a existência do email. Em desenvolvimento, `Model::preventLazyLoading()` está ligado pra estourar exceção se algum N+1 escapar pro controller.
+## Estatísticas
 
-## Documentação da API
+O endpoint de estatísticas agrega tarefas por status e prioridade, progresso de subtarefas e marcos vencidos.
 
-A documentação OpenAPI é gerada pelo `dedoc/scramble` a partir dos tipos do PHP (Form Requests, Resources, type hints). Subindo o servidor com `php artisan serve`, a interface fica em:
-
-    http://localhost:8000/docs/api
-
-O JSON cru fica em `/docs/api.json`. O security scheme `bearerAuth` já vem configurado e aplicado automaticamente em todas as rotas protegidas por `auth:sanctum`.
+O resultado é armazenado em cache por 60 segundos. Alterações em tarefas, subtarefas e marcos invalidam a chave de cache do projeto por meio de Observer.
 
 ## Testes
 
-Rodam contra SQLite em memória, com `RefreshDatabase` por feature test. A cobertura inclui autenticação, autorização (admin vs dono vs outro usuário), CRUD de projetos e tarefas, controle de papel em `/api/users` e hash de senha. Pra executar:
+```bash
+php artisan test
+```
 
-    php artisan test
+A suíte de Feature Tests cobre autenticação, autorização, isolamento entre usuários, projetos, quadros, colunas, tarefas, subtarefas, comentários, marcos, etiquetas, usuários e comportamentos de segurança.
 
-## Melhorias futuras
+O CI executa os testes em PHP 8.3 e 8.4. O workflow de segurança executa auditoria das dependências do Composer e varredura de segredos com Gitleaks.
 
-- Cobertura de testes nos recursos secundários (boards, columns, comments, subtasks, milestones, labels).
-- Cenários negativos extras nos endpoints em lote.
-- Matriz PHP 8.3 no GitHub Actions com Pint e validação do OpenAPI.
-- Refresh token (hoje Sanctum tá com `expiration => null`).
-- Cursor pagination nos endpoints de listagem.
-- Filtros mais expressivos via Spatie Query Builder.
-- Webhook de eventos de domínio (tarefa criada, movida, marco vencido). Aí entra Queue de verdade.
+## Decisões técnicas
+
+- **Isolamento por usuário:** consultas de projetos são filtradas pelo usuário autenticado e operações individuais passam pelas Policies.
+- **Rotas aninhadas:** `scopeBindings()` impede que um recurso de outro projeto seja resolvido por uma URL aninhada incompatível.
+- **Cache das estatísticas:** a resposta de estatísticas usa cache curto e invalidação automática quando os dados relevantes mudam.
 
 ## Segurança
 
-Reporte de vulnerabilidades e política de divulgação estão em [SECURITY.md](SECURITY.md).
+Além da autenticação e autorização, a API possui rate limiting para login e rotas autenticadas. O repositório também mantém verificações automatizadas de dependências e segredos no GitHub Actions.
+
+A política para reporte de vulnerabilidades está em [SECURITY.md](SECURITY.md).
 
 ## Licença
 
