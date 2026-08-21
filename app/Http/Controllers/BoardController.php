@@ -14,6 +14,8 @@ class BoardController extends Controller
 {
     public function index(IndexBoardRequest $request, Project $project)
     {
+        $this->authorize('view', $project);
+
         $validate = $request->validated();
 
         $perPage = $validate['per_page'] ?? 20;
