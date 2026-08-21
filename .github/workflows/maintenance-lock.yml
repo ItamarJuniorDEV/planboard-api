@@ -32,3 +32,5 @@ jobs:
             git commit -m "chore: atualizar dependencias do projeto"
             git push origin HEAD:fix/authorization-isolation-recovery
           fi
+
+# Workflow temporário para atualização segura do lockfile durante a manutenção.
