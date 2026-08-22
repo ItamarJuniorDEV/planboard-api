@@ -4,8 +4,10 @@ namespace Tests\Feature;
 
 use App\Models\Board;
 use App\Models\Column;
+use App\Models\Comment;
 use App\Models\Milestone;
 use App\Models\Project;
+use App\Models\Subtask;
 use App\Models\Task;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -144,6 +146,55 @@ class AuthorizationIsolationTest extends TestCase
                 'color' => '#000000',
             ])
             ->assertForbidden();
+    }
+
+    public function test_usuario_nao_executa_operacoes_em_lote_em_recursos_de_outro_usuario(): void
+    {
+        [$user, $foreignOwner, $foreignProject] = $this->foreignProject();
+        $foreignBoard = Board::factory()->for($foreignProject)->for($foreignOwner)->create();
+        $foreignColumn = Column::factory()->for($foreignBoard)->for($foreignOwner)->create();
+        $foreignTask = Task::factory()
+            ->for($foreignProject)
+            ->for($foreignColumn)
+            ->for($foreignOwner)
+            ->create();
+        $foreignSubtask = Subtask::factory()->for($foreignTask)->for($foreignOwner)->create(['done' => false]);
+        $foreignComment = Comment::factory()->for($foreignTask)->for($foreignOwner)->create();
+
+        $this->actingAs($user, 'sanctum')
+            ->patchJson("/api/projects/{$foreignProject->id}/tasks/bulk-move", [
+                'task_ids' => [$foreignTask->id],
+                'column_id' => $foreignColumn->id,
+            ])
+            ->assertForbidden();
+
+        $this->actingAs($user, 'sanctum')
+            ->postJson("/api/projects/{$foreignProject->id}/tasks/bulk-delete", [
+                'task_ids' => [$foreignTask->id],
+            ])
+            ->assertForbidden();
+
+        $this->actingAs($user, 'sanctum')
+            ->postJson("/api/projects/{$foreignProject->id}/tasks/{$foreignTask->id}/subtasks/bulk-complete", [
+                'subtask_ids' => [$foreignSubtask->id],
+            ])
+            ->assertForbidden();
+
+        $this->actingAs($user, 'sanctum')
+            ->postJson("/api/projects/{$foreignProject->id}/tasks/{$foreignTask->id}/subtasks/bulk-delete", [
+                'subtask_ids' => [$foreignSubtask->id],
+            ])
+            ->assertForbidden();
+
+        $this->actingAs($user, 'sanctum')
+            ->postJson("/api/projects/{$foreignProject->id}/tasks/{$foreignTask->id}/comments/bulk-delete", [
+                'comment_ids' => [$foreignComment->id],
+            ])
+            ->assertForbidden();
+
+        $this->assertDatabaseHas('tasks', ['id' => $foreignTask->id]);
+        $this->assertDatabaseHas('subtasks', ['id' => $foreignSubtask->id, 'done' => false]);
+        $this->assertDatabaseHas('comments', ['id' => $foreignComment->id]);
     }
 
     /** @return array{User, User, Project} */

@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Task;
 
+use App\Models\Project;
 use App\Models\Task;
 use Illuminate\Foundation\Http\FormRequest;
 
@@ -9,7 +10,13 @@ class BulkDeleteTaskRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return $this->user()->can('viewAny', Task::class);
+        $project = $this->route('project');
+        $user = $this->user();
+
+        return $project instanceof Project
+            && $user !== null
+            && $user->can('view', $project)
+            && $user->can('viewAny', Task::class);
     }
 
     /** @return array<string, mixed> */

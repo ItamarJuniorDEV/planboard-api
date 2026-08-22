@@ -3,13 +3,20 @@
 namespace App\Http\Requests\Comment;
 
 use App\Models\Comment;
+use App\Models\Task;
 use Illuminate\Foundation\Http\FormRequest;
 
 class BulkDeleteCommentRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return $this->user()->can('viewAny', Comment::class);
+        $task = $this->route('task');
+        $user = $this->user();
+
+        return $task instanceof Task
+            && $user !== null
+            && $user->can('view', $task)
+            && $user->can('viewAny', Comment::class);
     }
 
     /** @return array<string, mixed> */
