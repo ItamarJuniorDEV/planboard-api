@@ -12,11 +12,12 @@ use App\Http\Resources\TaskResource;
 use App\Models\Column;
 use App\Models\Project;
 use App\Models\Task;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class TaskController extends Controller
 {
-    public function index(IndexTaskRequest $request, Project $project)
+    public function index(IndexTaskRequest $request, Project $project): JsonResponse
     {
         $this->authorize('view', $project);
 
@@ -59,7 +60,7 @@ class TaskController extends Controller
         ], 200);
     }
 
-    public function show(Project $project, Task $task)
+    public function show(Project $project, Task $task): JsonResponse
     {
         $this->authorize('view', $task);
 
@@ -70,7 +71,7 @@ class TaskController extends Controller
         ], 200);
     }
 
-    public function store(StoreTaskRequest $request, Project $project)
+    public function store(StoreTaskRequest $request, Project $project): JsonResponse
     {
         $validate = $request->validated();
 
@@ -90,7 +91,7 @@ class TaskController extends Controller
         ], 201);
     }
 
-    public function update(UpdateTaskRequest $request, Project $project, Task $task)
+    public function update(UpdateTaskRequest $request, Project $project, Task $task): JsonResponse
     {
         $validate = $request->validated();
 
@@ -107,7 +108,7 @@ class TaskController extends Controller
         ], 200);
     }
 
-    public function destroy(Request $request, Project $project, Task $task)
+    public function destroy(Request $request, Project $project, Task $task): JsonResponse
     {
         $this->authorize('delete', $task);
 
@@ -122,7 +123,7 @@ class TaskController extends Controller
         ], 200);
     }
 
-    public function move(MoveTaskRequest $request, Project $project, Task $task)
+    public function move(MoveTaskRequest $request, Project $project, Task $task): JsonResponse
     {
         $validate = $request->validated();
 
@@ -147,7 +148,7 @@ class TaskController extends Controller
         ], 200);
     }
 
-    public function bulkMove(BulkMoveTaskRequest $request, Project $project)
+    public function bulkMove(BulkMoveTaskRequest $request, Project $project): JsonResponse
     {
         $validate = $request->validated();
 
@@ -185,7 +186,7 @@ class TaskController extends Controller
         ], 200);
     }
 
-    public function bulkDelete(BulkDeleteTaskRequest $request, Project $project)
+    public function bulkDelete(BulkDeleteTaskRequest $request, Project $project): JsonResponse
     {
         $validate = $request->validated();
 

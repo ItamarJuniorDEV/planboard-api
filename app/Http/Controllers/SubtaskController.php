@@ -10,11 +10,12 @@ use App\Http\Resources\SubtaskResource;
 use App\Models\Project;
 use App\Models\Subtask;
 use App\Models\Task;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class SubtaskController extends Controller
 {
-    public function index(IndexSubtaskRequest $request, Project $project, Task $task)
+    public function index(IndexSubtaskRequest $request, Project $project, Task $task): JsonResponse
     {
         $validate = $request->validated();
 
@@ -29,7 +30,7 @@ class SubtaskController extends Controller
         ], 200);
     }
 
-    public function show(Project $project, Task $task, Subtask $subtask)
+    public function show(Project $project, Task $task, Subtask $subtask): JsonResponse
     {
         $this->authorize('view', $subtask);
 
@@ -40,7 +41,7 @@ class SubtaskController extends Controller
         ], 200);
     }
 
-    public function store(StoreSubtaskRequest $request, Project $project, Task $task)
+    public function store(StoreSubtaskRequest $request, Project $project, Task $task): JsonResponse
     {
         $validate = $request->validated();
 
@@ -58,7 +59,7 @@ class SubtaskController extends Controller
         ], 201);
     }
 
-    public function update(UpdateSubtaskRequest $request, Project $project, Task $task, Subtask $subtask)
+    public function update(UpdateSubtaskRequest $request, Project $project, Task $task, Subtask $subtask): JsonResponse
     {
         $validate = $request->validated();
 
@@ -73,7 +74,7 @@ class SubtaskController extends Controller
         ], 200);
     }
 
-    public function destroy(Request $request, Project $project, Task $task, Subtask $subtask)
+    public function destroy(Request $request, Project $project, Task $task, Subtask $subtask): JsonResponse
     {
         $this->authorize('delete', $subtask);
 
@@ -86,7 +87,7 @@ class SubtaskController extends Controller
         ], 200);
     }
 
-    public function bulkComplete(BulkSubtaskRequest $request, Project $project, Task $task)
+    public function bulkComplete(BulkSubtaskRequest $request, Project $project, Task $task): JsonResponse
     {
         $validate = $request->validated();
 
@@ -115,7 +116,7 @@ class SubtaskController extends Controller
         ], 200);
     }
 
-    public function bulkDelete(BulkSubtaskRequest $request, Project $project, Task $task)
+    public function bulkDelete(BulkSubtaskRequest $request, Project $project, Task $task): JsonResponse
     {
         $validate = $request->validated();
 

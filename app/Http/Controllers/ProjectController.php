@@ -7,12 +7,13 @@ use App\Http\Requests\Project\StoreProjectRequest;
 use App\Http\Requests\Project\UpdateProjectRequest;
 use App\Http\Resources\ProjectResource;
 use App\Models\Project;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 
 class ProjectController extends Controller
 {
-    public function index(IndexProjectRequest $request)
+    public function index(IndexProjectRequest $request): JsonResponse
     {
         $validate = $request->validated();
 
@@ -57,7 +58,7 @@ class ProjectController extends Controller
         ], 200);
     }
 
-    public function show(Project $project)
+    public function show(Project $project): JsonResponse
     {
         $this->authorize('view', $project);
 
@@ -68,7 +69,7 @@ class ProjectController extends Controller
         ], 200);
     }
 
-    public function store(StoreProjectRequest $request)
+    public function store(StoreProjectRequest $request): JsonResponse
     {
         $validate = $request->validated();
 
@@ -88,7 +89,7 @@ class ProjectController extends Controller
         ], 201);
     }
 
-    public function update(UpdateProjectRequest $request, Project $project)
+    public function update(UpdateProjectRequest $request, Project $project): JsonResponse
     {
         $validate = $request->validated();
 
@@ -106,7 +107,7 @@ class ProjectController extends Controller
         ], 200);
     }
 
-    public function destroy(Request $request, Project $project)
+    public function destroy(Request $request, Project $project): JsonResponse
     {
         $this->authorize('delete', $project);
 
@@ -121,7 +122,7 @@ class ProjectController extends Controller
         ], 200);
     }
 
-    public function stats(Project $project)
+    public function stats(Project $project): JsonResponse
     {
         $this->authorize('view', $project);
 

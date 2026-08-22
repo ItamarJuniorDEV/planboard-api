@@ -10,11 +10,12 @@ use App\Http\Resources\CommentResource;
 use App\Models\Comment;
 use App\Models\Project;
 use App\Models\Task;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class CommentController extends Controller
 {
-    public function index(IndexCommentRequest $request, Project $project, Task $task)
+    public function index(IndexCommentRequest $request, Project $project, Task $task): JsonResponse
     {
         $validate = $request->validated();
 
@@ -29,7 +30,7 @@ class CommentController extends Controller
         ], 200);
     }
 
-    public function store(StoreCommentRequest $request, Project $project, Task $task)
+    public function store(StoreCommentRequest $request, Project $project, Task $task): JsonResponse
     {
         $validate = $request->validated();
 
@@ -47,7 +48,7 @@ class CommentController extends Controller
         ], 201);
     }
 
-    public function show(Project $project, Task $task, Comment $comment)
+    public function show(Project $project, Task $task, Comment $comment): JsonResponse
     {
         $this->authorize('view', $comment);
 
@@ -58,7 +59,7 @@ class CommentController extends Controller
         ], 200);
     }
 
-    public function update(UpdateCommentRequest $request, Project $project, Task $task, Comment $comment)
+    public function update(UpdateCommentRequest $request, Project $project, Task $task, Comment $comment): JsonResponse
     {
         $validate = $request->validated();
 
@@ -73,7 +74,7 @@ class CommentController extends Controller
         ], 200);
     }
 
-    public function destroy(Request $request, Project $project, Task $task, Comment $comment)
+    public function destroy(Request $request, Project $project, Task $task, Comment $comment): JsonResponse
     {
         $this->authorize('delete', $comment);
 
@@ -86,7 +87,7 @@ class CommentController extends Controller
         ], 200);
     }
 
-    public function bulkDelete(BulkDeleteCommentRequest $request, Project $project, Task $task)
+    public function bulkDelete(BulkDeleteCommentRequest $request, Project $project, Task $task): JsonResponse
     {
         $validated = $request->validated();
 

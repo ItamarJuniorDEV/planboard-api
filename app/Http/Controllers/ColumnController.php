@@ -9,11 +9,12 @@ use App\Http\Resources\ColumnResource;
 use App\Models\Board;
 use App\Models\Column;
 use App\Models\Project;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class ColumnController extends Controller
 {
-    public function index(IndexColumnRequest $request, Project $project, Board $board)
+    public function index(IndexColumnRequest $request, Project $project, Board $board): JsonResponse
     {
         $validated = $request->validated();
 
@@ -28,7 +29,7 @@ class ColumnController extends Controller
         ], 200);
     }
 
-    public function show(Project $project, Board $board, Column $column)
+    public function show(Project $project, Board $board, Column $column): JsonResponse
     {
         $this->authorize('view', $column);
 
@@ -39,7 +40,7 @@ class ColumnController extends Controller
         ], 200);
     }
 
-    public function store(StoreColumnRequest $request, Project $project, Board $board)
+    public function store(StoreColumnRequest $request, Project $project, Board $board): JsonResponse
     {
         $validated = $request->validated();
 
@@ -57,7 +58,7 @@ class ColumnController extends Controller
         ], 201);
     }
 
-    public function update(UpdateColumnRequest $request, Project $project, Board $board, Column $column)
+    public function update(UpdateColumnRequest $request, Project $project, Board $board, Column $column): JsonResponse
     {
         $validated = $request->validated();
 
@@ -72,7 +73,7 @@ class ColumnController extends Controller
         ], 200);
     }
 
-    public function destroy(Request $request, Project $project, Board $board, Column $column)
+    public function destroy(Request $request, Project $project, Board $board, Column $column): JsonResponse
     {
         $this->authorize('delete', $column);
 

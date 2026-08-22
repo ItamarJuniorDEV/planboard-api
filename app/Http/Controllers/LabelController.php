@@ -8,11 +8,12 @@ use App\Http\Requests\Label\UpdateLabelRequest;
 use App\Http\Resources\LabelResource;
 use App\Models\Label;
 use App\Models\Project;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class LabelController extends Controller
 {
-    public function index(IndexLabelRequest $request, Project $project)
+    public function index(IndexLabelRequest $request, Project $project): JsonResponse
     {
         $validated = $request->validated();
 
@@ -33,7 +34,7 @@ class LabelController extends Controller
         ], 200);
     }
 
-    public function show(Project $project, Label $label)
+    public function show(Project $project, Label $label): JsonResponse
     {
         $this->authorize('view', $label);
 
@@ -44,7 +45,7 @@ class LabelController extends Controller
         ], 200);
     }
 
-    public function store(StoreLabelRequest $request, Project $project)
+    public function store(StoreLabelRequest $request, Project $project): JsonResponse
     {
         $validated = $request->validated();
 
@@ -62,7 +63,7 @@ class LabelController extends Controller
         ], 201);
     }
 
-    public function update(UpdateLabelRequest $request, Project $project, Label $label)
+    public function update(UpdateLabelRequest $request, Project $project, Label $label): JsonResponse
     {
         $validated = $request->validated();
 
@@ -77,7 +78,7 @@ class LabelController extends Controller
         ], 200);
     }
 
-    public function destroy(Request $request, Project $project, Label $label)
+    public function destroy(Request $request, Project $project, Label $label): JsonResponse
     {
         $this->authorize('delete', $label);
 
