@@ -16,7 +16,6 @@ class UpdateCommentRequest extends FormRequest
     {
         return [
             'content' => ['required', 'string'],
-            'author' => ['required', 'string', 'max:100'],
         ];
     }
 }

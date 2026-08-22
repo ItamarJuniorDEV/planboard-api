@@ -25,7 +25,7 @@ class CommentTest extends TestCase
     {
         parent::setUp();
 
-        $this->owner = User::factory()->create();
+        $this->owner = User::factory()->create(['name' => 'Dono do projeto']);
         $this->outro = User::factory()->create();
         $this->project = Project::factory()->for($this->owner)->create();
         $this->task = Task::factory()->for($this->project)->for($this->owner)->create();
@@ -41,22 +41,24 @@ class CommentTest extends TestCase
         $response->assertOk();
     }
 
-    public function test_store_cria_comentario()
+    public function test_store_deriva_autor_do_usuario_autenticado()
     {
         $response = $this->actingAs($this->owner, 'sanctum')
             ->postJson(
                 "/api/projects/{$this->project->id}/tasks/{$this->task->id}/comments",
-                ['content' => 'Acompanhamento da entrega', 'author' => 'Itamar'],
+                ['content' => 'Acompanhamento da entrega', 'author' => 'Nome forjado'],
             );
 
         $response->assertStatus(201);
         $this->assertDatabaseHas('comments', [
             'task_id' => $this->task->id,
+            'user_id' => $this->owner->id,
             'content' => 'Acompanhamento da entrega',
+            'author' => 'Dono do projeto',
         ]);
     }
 
-    public function test_store_exige_campos()
+    public function test_store_exige_conteudo()
     {
         $response = $this->actingAs($this->owner, 'sanctum')
             ->postJson(
@@ -65,7 +67,7 @@ class CommentTest extends TestCase
             );
 
         $response->assertStatus(422)
-            ->assertJsonValidationErrors(['content', 'author']);
+            ->assertJsonValidationErrors(['content']);
     }
 
     public function test_update_recusa_dono_diferente()
@@ -75,7 +77,7 @@ class CommentTest extends TestCase
         $response = $this->actingAs($this->outro, 'sanctum')
             ->putJson(
                 "/api/projects/{$this->project->id}/tasks/{$this->task->id}/comments/{$comment->id}",
-                ['content' => 'mudei', 'author' => 'fake'],
+                ['content' => 'mudei'],
             );
 
         $response->assertStatus(403);

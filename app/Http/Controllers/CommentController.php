@@ -38,7 +38,7 @@ class CommentController extends Controller
         $comment->task_id = $task->id;
         $comment->user_id = $request->user()->id;
         $comment->content = $validate['content'];
-        $comment->author = $validate['author'];
+        $comment->author = $request->user()->name;
         $comment->save();
 
         return response()->json([
@@ -64,7 +64,6 @@ class CommentController extends Controller
         $validate = $request->validated();
 
         $comment->content = $validate['content'];
-        $comment->author = $validate['author'];
         $comment->save();
 
         return response()->json([
