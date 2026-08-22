@@ -3,13 +3,20 @@
 namespace App\Http\Requests\Board;
 
 use App\Models\Board;
+use App\Models\Project;
 use Illuminate\Foundation\Http\FormRequest;
 
 class StoreBoardRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return $this->user()->can('create', Board::class);
+        $project = $this->route('project');
+        $user = $this->user();
+
+        return $project instanceof Project
+            && $user !== null
+            && $user->can('view', $project)
+            && $user->can('create', Board::class);
     }
 
     /** @return array<string, mixed> */

@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\Board;
+use App\Models\Column;
 use App\Models\Milestone;
 use App\Models\Project;
 use App\Models\Task;
@@ -65,6 +66,68 @@ class AuthorizationIsolationTest extends TestCase
             ->assertForbidden();
     }
 
+    public function test_usuario_nao_cria_recursos_em_projeto_de_outro_usuario(): void
+    {
+        [$user, $foreignOwner, $foreignProject] = $this->foreignProject();
+        $foreignBoard = Board::factory()->for($foreignProject)->for($foreignOwner)->create();
+        $foreignColumn = Column::factory()->for($foreignBoard)->for($foreignOwner)->create();
+        $foreignTask = Task::factory()
+            ->for($foreignProject)
+            ->for($foreignColumn)
+            ->for($foreignOwner)
+            ->create();
+
+        $this->actingAs($user, 'sanctum')
+            ->postJson("/api/projects/{$foreignProject->id}/boards", [
+                'name' => 'Quadro indevido',
+                'status' => 'active',
+            ])
+            ->assertForbidden();
+
+        $this->actingAs($user, 'sanctum')
+            ->postJson("/api/projects/{$foreignProject->id}/boards/{$foreignBoard->id}/columns", [
+                'name' => 'Coluna indevida',
+                'position' => 1,
+            ])
+            ->assertForbidden();
+
+        $this->actingAs($user, 'sanctum')
+            ->postJson("/api/projects/{$foreignProject->id}/tasks", [
+                'title' => 'Tarefa indevida',
+                'priority' => 'medium',
+                'status' => 'todo',
+            ])
+            ->assertForbidden();
+
+        $this->actingAs($user, 'sanctum')
+            ->postJson("/api/projects/{$foreignProject->id}/tasks/{$foreignTask->id}/subtasks", [
+                'title' => 'Subtarefa indevida',
+                'done' => false,
+            ])
+            ->assertForbidden();
+
+        $this->actingAs($user, 'sanctum')
+            ->postJson("/api/projects/{$foreignProject->id}/tasks/{$foreignTask->id}/comments", [
+                'content' => 'Comentário indevido',
+                'author' => 'Outro usuário',
+            ])
+            ->assertForbidden();
+
+        $this->actingAs($user, 'sanctum')
+            ->postJson("/api/projects/{$foreignProject->id}/milestones", [
+                'title' => 'Marco indevido',
+            ])
+            ->assertForbidden();
+
+        $this->actingAs($user, 'sanctum')
+            ->postJson("/api/projects/{$foreignProject->id}/labels", [
+                'name' => 'Label indevida',
+                'color' => '#000000',
+            ])
+            ->assertForbidden();
+    }
+
+    /** @return array{User, User, Project} */
     private function foreignProject(): array
     {
         $user = User::factory()->create();
