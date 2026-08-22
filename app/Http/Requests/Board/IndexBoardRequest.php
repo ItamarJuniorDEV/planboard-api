@@ -18,7 +18,7 @@ class IndexBoardRequest extends FormRequest
         return [
             'per_page' => ['nullable', 'integer', 'min:1', 'max:20'],
             'status' => ['nullable', 'string', 'in:active,archived'],
-            'search' => ['nullable', 'string'],
+            'search' => ['nullable', 'string', 'max:100'],
         ];
     }
 }
