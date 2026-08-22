@@ -11,6 +11,7 @@ class UpdateMilestoneRequest extends FormRequest
         return $this->user()->can('update', $this->route('milestone'));
     }
 
+    /** @return array<string, mixed> */
     public function rules(): array
     {
         return [

@@ -8,11 +8,12 @@ use App\Http\Requests\Board\UpdateBoardRequest;
 use App\Http\Resources\BoardResource;
 use App\Models\Board;
 use App\Models\Project;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class BoardController extends Controller
 {
-    public function index(IndexBoardRequest $request, Project $project)
+    public function index(IndexBoardRequest $request, Project $project): JsonResponse
     {
         $this->authorize('view', $project);
 
@@ -31,15 +32,16 @@ class BoardController extends Controller
         }
 
         $boards = $query->paginate($perPage);
+        $boards->through(fn (Board $board): array => (new BoardResource($board))->resolve());
 
         return response()->json([
             'success' => true,
             'message' => 'Quadros listados com sucesso!',
-            'data' => BoardResource::collection($boards)->resource,
+            'data' => $boards,
         ], 200);
     }
 
-    public function show(Project $project, Board $board)
+    public function show(Project $project, Board $board): JsonResponse
     {
         $this->authorize('view', $board);
 
@@ -50,7 +52,7 @@ class BoardController extends Controller
         ], 200);
     }
 
-    public function store(StoreBoardRequest $request, Project $project)
+    public function store(StoreBoardRequest $request, Project $project): JsonResponse
     {
         $validate = $request->validated();
 
@@ -68,7 +70,7 @@ class BoardController extends Controller
         ], 201);
     }
 
-    public function update(UpdateBoardRequest $request, Project $project, Board $board)
+    public function update(UpdateBoardRequest $request, Project $project, Board $board): JsonResponse
     {
         $validate = $request->validated();
 
@@ -83,7 +85,7 @@ class BoardController extends Controller
         ], 200);
     }
 
-    public function destroy(Request $request, Project $project, Board $board)
+    public function destroy(Request $request, Project $project, Board $board): JsonResponse
     {
         $this->authorize('delete', $board);
 

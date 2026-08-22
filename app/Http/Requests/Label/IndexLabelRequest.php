@@ -12,11 +12,12 @@ class IndexLabelRequest extends FormRequest
         return $this->user()->can('viewAny', Label::class);
     }
 
+    /** @return array<string, mixed> */
     public function rules(): array
     {
         return [
             'per_page' => ['nullable', 'integer', 'min:1', 'max:30'],
-            'search' => ['nullable', 'string'],
+            'search' => ['nullable', 'string', 'max:100'],
         ];
     }
 }

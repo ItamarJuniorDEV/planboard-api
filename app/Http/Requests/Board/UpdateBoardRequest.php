@@ -11,6 +11,7 @@ class UpdateBoardRequest extends FormRequest
         return $this->user()->can('update', $this->route('board'));
     }
 
+    /** @return array<string, mixed> */
     public function rules(): array
     {
         return [

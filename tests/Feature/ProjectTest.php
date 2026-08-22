@@ -2,7 +2,9 @@
 
 namespace Tests\Feature;
 
+use App\Models\Milestone;
 use App\Models\Project;
+use App\Models\Subtask;
 use App\Models\Task;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -202,18 +204,35 @@ class ProjectTest extends TestCase
         $response->assertStatus(403);
     }
 
-    public function test_stats_usa_cache_e_e_invalidado_apos_escrita()
+    public function test_stats_usa_cache_e_e_invalidado_apos_escritas_do_dominio()
     {
         $projeto = $this->criarProjeto($this->membro);
 
-        $this->actingAs($this->membro, 'sanctum')
-            ->getJson("/api/projects/{$projeto->id}/stats")
-            ->assertOk();
+        $this->cacheProjectStats($projeto);
 
-        $this->assertTrue(Cache::has("project:{$projeto->id}:stats"));
-
-        Task::factory()->for($projeto)->for($this->membro)->create();
+        $task = Task::factory()->for($projeto)->for($this->membro)->create();
 
         $this->assertFalse(Cache::has("project:{$projeto->id}:stats"));
+
+        $this->cacheProjectStats($projeto);
+
+        Subtask::factory()->for($task)->for($this->membro)->create();
+
+        $this->assertFalse(Cache::has("project:{$projeto->id}:stats"));
+
+        $this->cacheProjectStats($projeto);
+
+        Milestone::factory()->for($projeto)->for($this->membro)->create();
+
+        $this->assertFalse(Cache::has("project:{$projeto->id}:stats"));
+    }
+
+    private function cacheProjectStats(Project $project): void
+    {
+        $this->actingAs($this->membro, 'sanctum')
+            ->getJson("/api/projects/{$project->id}/stats")
+            ->assertOk();
+
+        $this->assertTrue(Cache::has("project:{$project->id}:stats"));
     }
 }

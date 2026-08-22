@@ -12,12 +12,13 @@ class IndexBoardRequest extends FormRequest
         return $this->user()->can('viewAny', Board::class);
     }
 
+    /** @return array<string, mixed> */
     public function rules(): array
     {
         return [
             'per_page' => ['nullable', 'integer', 'min:1', 'max:20'],
             'status' => ['nullable', 'string', 'in:active,archived'],
-            'search' => ['nullable', 'string'],
+            'search' => ['nullable', 'string', 'max:100'],
         ];
     }
 }

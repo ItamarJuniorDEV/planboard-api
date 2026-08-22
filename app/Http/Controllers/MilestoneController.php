@@ -8,11 +8,12 @@ use App\Http\Requests\Milestone\UpdateMilestoneRequest;
 use App\Http\Resources\MilestoneResource;
 use App\Models\Milestone;
 use App\Models\Project;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class MilestoneController extends Controller
 {
-    public function index(IndexMilestoneRequest $request, Project $project)
+    public function index(IndexMilestoneRequest $request, Project $project): JsonResponse
     {
         $this->authorize('view', $project);
 
@@ -39,15 +40,16 @@ class MilestoneController extends Controller
         $query->orderBy($orderBy, $direction);
 
         $milestones = $query->paginate($perPage);
+        $milestones->through(fn (Milestone $milestone): array => (new MilestoneResource($milestone))->resolve());
 
         return response()->json([
             'success' => true,
             'message' => 'Marcos listados com sucesso!',
-            'data' => MilestoneResource::collection($milestones)->resource,
+            'data' => $milestones,
         ], 200);
     }
 
-    public function store(StoreMilestoneRequest $request, Project $project)
+    public function store(StoreMilestoneRequest $request, Project $project): JsonResponse
     {
         $validated = $request->validated();
 
@@ -65,7 +67,7 @@ class MilestoneController extends Controller
         ], 201);
     }
 
-    public function update(UpdateMilestoneRequest $request, Project $project, Milestone $milestone)
+    public function update(UpdateMilestoneRequest $request, Project $project, Milestone $milestone): JsonResponse
     {
         $validated = $request->validated();
 
@@ -80,7 +82,7 @@ class MilestoneController extends Controller
         ], 200);
     }
 
-    public function show(Project $project, Milestone $milestone)
+    public function show(Project $project, Milestone $milestone): JsonResponse
     {
         $this->authorize('view', $milestone);
 
@@ -91,7 +93,7 @@ class MilestoneController extends Controller
         ], 200);
     }
 
-    public function destroy(Request $request, Project $project, Milestone $milestone)
+    public function destroy(Request $request, Project $project, Milestone $milestone): JsonResponse
     {
         $this->authorize('delete', $milestone);
 

@@ -11,6 +11,7 @@ class UpdateSubtaskRequest extends FormRequest
         return $this->user()->can('update', $this->route('subtask'));
     }
 
+    /** @return array<string, mixed> */
     public function rules(): array
     {
         return [

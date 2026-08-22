@@ -11,6 +11,7 @@ class MoveTaskRequest extends FormRequest
         return $this->user()->can('move', $this->route('task'));
     }
 
+    /** @return array<string, mixed> */
     public function rules(): array
     {
         return [

@@ -12,12 +12,13 @@ class IndexProjectRequest extends FormRequest
         return $this->user()->can('viewAny', Project::class);
     }
 
+    /** @return array<string, mixed> */
     public function rules(): array
     {
         return [
             'per_page' => ['nullable', 'integer', 'min:1', 'max:50'],
             'status' => ['nullable', 'string', 'in:draft,planning,active,on_hold,completed,cancelled'],
-            'search' => ['nullable', 'string'],
+            'search' => ['nullable', 'string', 'max:100'],
             'deadline_from' => ['nullable', 'date'],
             'deadline_to' => ['nullable', 'date'],
             'order_by' => ['nullable', 'string', 'in:created_at,title,deadline,budget'],

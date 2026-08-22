@@ -2,29 +2,35 @@
 
 namespace App\Observers;
 
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Facades\Cache;
+use App\Models\Milestone;
+use App\Models\Subtask;
+use App\Models\Task;
+use App\Services\ProjectStatsService;
 
 class InvalidatesProjectStats
 {
-    public function saved(Model $model): void
+    public function __construct(private readonly ProjectStatsService $stats) {}
+
+    public function saved(Task|Subtask|Milestone $model): void
     {
         $this->invalidate($model);
     }
 
-    public function deleted(Model $model): void
+    public function deleted(Task|Subtask|Milestone $model): void
     {
         $this->invalidate($model);
     }
 
-    private function invalidate(Model $model): void
+    private function invalidate(Task|Subtask|Milestone $model): void
     {
-        $projectId = $model->project_id ?? $model->task?->project_id ?? null;
+        $projectId = $model instanceof Subtask
+            ? $model->task()->value('project_id')
+            : $model->project_id;
 
         if ($projectId === null) {
             return;
         }
 
-        Cache::forget("project:{$projectId}:stats");
+        $this->stats->invalidate((int) $projectId);
     }
 }

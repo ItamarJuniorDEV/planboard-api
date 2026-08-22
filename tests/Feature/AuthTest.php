@@ -4,7 +4,9 @@ namespace Tests\Feature;
 
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\RateLimiter;
+use Mockery;
 use Tests\TestCase;
 
 class AuthTest extends TestCase
@@ -31,8 +33,9 @@ class AuthTest extends TestCase
             ->assertJsonStructure(['token', 'token_type', 'data' => ['id', 'name', 'email']]);
     }
 
-    public function test_credenciais_invalidas_retornam_401()
+    public function test_credenciais_invalidas_retornam_401_e_registram_evento_seguro()
     {
+        Log::spy();
         $user = User::factory()->create();
 
         $response = $this->postJson('/api/login', [
@@ -41,6 +44,14 @@ class AuthTest extends TestCase
         ]);
 
         $response->assertStatus(401);
+
+        Log::shouldHaveReceived('warning')
+            ->once()
+            ->with('Falha de autenticação', Mockery::on(function (array $context) use ($user): bool {
+                return $context['email_hash'] === hash('sha256', strtolower($user->email))
+                    && ! array_key_exists('email', $context)
+                    && array_key_exists('ip', $context);
+            }));
     }
 
     public function test_login_com_email_inexistente_retorna_mesma_mensagem_de_senha_errada()
@@ -108,6 +119,22 @@ class AuthTest extends TestCase
         ]);
 
         $response->assertStatus(429);
+    }
+
+    public function test_token_de_login_expira_apos_oito_horas(): void
+    {
+        $user = User::factory()->create();
+
+        $token = $this->postJson('/api/login', [
+            'email' => $user->email,
+            'password' => 'password',
+        ])->assertOk()->json('token');
+
+        $this->travel(481)->minutes();
+
+        $this->withHeader('Authorization', 'Bearer '.$token)
+            ->getJson('/api/projects')
+            ->assertStatus(401);
     }
 
     public function test_logout_invalida_token()

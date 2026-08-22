@@ -12,11 +12,15 @@ use App\Http\Resources\TaskResource;
 use App\Models\Column;
 use App\Models\Project;
 use App\Models\Task;
+use App\Services\ProjectStatsService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class TaskController extends Controller
 {
-    public function index(IndexTaskRequest $request, Project $project)
+    public function __construct(private readonly ProjectStatsService $stats) {}
+
+    public function index(IndexTaskRequest $request, Project $project): JsonResponse
     {
         $this->authorize('view', $project);
 
@@ -35,6 +39,8 @@ class TaskController extends Controller
             'description',
             'priority',
             'status',
+            'created_at',
+            'updated_at',
         ]);
 
         if (isset($validate['priority'])) {
@@ -51,15 +57,16 @@ class TaskController extends Controller
 
         $query->orderBy($orderBy, $direction);
         $tasks = $query->paginate($perPage);
+        $tasks->through(fn (Task $task): array => (new TaskResource($task))->resolve());
 
         return response()->json([
             'success' => true,
             'message' => 'Tarefas listadas com sucesso!',
-            'data' => TaskResource::collection($tasks)->resource,
+            'data' => $tasks,
         ], 200);
     }
 
-    public function show(Project $project, Task $task)
+    public function show(Project $project, Task $task): JsonResponse
     {
         $this->authorize('view', $task);
 
@@ -70,7 +77,7 @@ class TaskController extends Controller
         ], 200);
     }
 
-    public function store(StoreTaskRequest $request, Project $project)
+    public function store(StoreTaskRequest $request, Project $project): JsonResponse
     {
         $validate = $request->validated();
 
@@ -90,7 +97,7 @@ class TaskController extends Controller
         ], 201);
     }
 
-    public function update(UpdateTaskRequest $request, Project $project, Task $task)
+    public function update(UpdateTaskRequest $request, Project $project, Task $task): JsonResponse
     {
         $validate = $request->validated();
 
@@ -107,7 +114,7 @@ class TaskController extends Controller
         ], 200);
     }
 
-    public function destroy(Request $request, Project $project, Task $task)
+    public function destroy(Request $request, Project $project, Task $task): JsonResponse
     {
         $this->authorize('delete', $task);
 
@@ -122,12 +129,11 @@ class TaskController extends Controller
         ], 200);
     }
 
-    public function move(MoveTaskRequest $request, Project $project, Task $task)
+    public function move(MoveTaskRequest $request, Project $project, Task $task): JsonResponse
     {
         $validate = $request->validated();
 
         $column = Column::find($validate['column_id']);
-
         $board = $project->boards()->find($column->board_id);
 
         if (! $board) {
@@ -147,7 +153,7 @@ class TaskController extends Controller
         ], 200);
     }
 
-    public function bulkMove(BulkMoveTaskRequest $request, Project $project)
+    public function bulkMove(BulkMoveTaskRequest $request, Project $project): JsonResponse
     {
         $validate = $request->validated();
 
@@ -170,9 +176,7 @@ class TaskController extends Controller
         }
 
         $tasks = $project->tasks()->whereIn('id', $validate['task_ids'])->get();
-
         $foundIds = $tasks->pluck('id')->all();
-
         $notFound = array_values(array_diff($validate['task_ids'], $foundIds));
 
         $project->tasks()->whereIn('id', $foundIds)->update(['column_id' => $column->id]);
@@ -185,22 +189,24 @@ class TaskController extends Controller
         ], 200);
     }
 
-    public function bulkDelete(BulkDeleteTaskRequest $request, Project $project)
+    public function bulkDelete(BulkDeleteTaskRequest $request, Project $project): JsonResponse
     {
         $validate = $request->validated();
 
         $tasks = $project->tasks()->whereIn('id', $validate['task_ids'])->get();
-
         $foundIds = $tasks->pluck('id')->all();
-
         $notFound = array_values(array_diff($validate['task_ids'], $foundIds));
 
-        $project->tasks()->whereIn('id', $foundIds)->delete();
+        $deleted = $project->tasks()->whereIn('id', $foundIds)->delete();
+
+        if ($deleted > 0) {
+            $this->stats->invalidate($project->id);
+        }
 
         return response()->json([
             'success' => true,
             'message' => 'Operação concluída!',
-            'deleted' => count($foundIds),
+            'deleted' => $deleted,
             'not_found' => $notFound,
         ], 200);
     }

@@ -10,26 +10,28 @@ use App\Http\Resources\CommentResource;
 use App\Models\Comment;
 use App\Models\Project;
 use App\Models\Task;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class CommentController extends Controller
 {
-    public function index(IndexCommentRequest $request, Project $project, Task $task)
+    public function index(IndexCommentRequest $request, Project $project, Task $task): JsonResponse
     {
         $validate = $request->validated();
 
         $perPage = $validate['per_page'] ?? 50;
 
         $comments = $task->comments()->paginate($perPage);
+        $comments->through(fn (Comment $comment): array => (new CommentResource($comment))->resolve());
 
         return response()->json([
             'success' => true,
             'message' => 'Comentários listados com sucesso!',
-            'data' => CommentResource::collection($comments)->resource,
+            'data' => $comments,
         ], 200);
     }
 
-    public function store(StoreCommentRequest $request, Project $project, Task $task)
+    public function store(StoreCommentRequest $request, Project $project, Task $task): JsonResponse
     {
         $validate = $request->validated();
 
@@ -37,7 +39,7 @@ class CommentController extends Controller
         $comment->task_id = $task->id;
         $comment->user_id = $request->user()->id;
         $comment->content = $validate['content'];
-        $comment->author = $validate['author'];
+        $comment->author = $request->user()->name;
         $comment->save();
 
         return response()->json([
@@ -47,7 +49,7 @@ class CommentController extends Controller
         ], 201);
     }
 
-    public function show(Project $project, Task $task, Comment $comment)
+    public function show(Project $project, Task $task, Comment $comment): JsonResponse
     {
         $this->authorize('view', $comment);
 
@@ -58,12 +60,11 @@ class CommentController extends Controller
         ], 200);
     }
 
-    public function update(UpdateCommentRequest $request, Project $project, Task $task, Comment $comment)
+    public function update(UpdateCommentRequest $request, Project $project, Task $task, Comment $comment): JsonResponse
     {
         $validate = $request->validated();
 
         $comment->content = $validate['content'];
-        $comment->author = $validate['author'];
         $comment->save();
 
         return response()->json([
@@ -73,7 +74,7 @@ class CommentController extends Controller
         ], 200);
     }
 
-    public function destroy(Request $request, Project $project, Task $task, Comment $comment)
+    public function destroy(Request $request, Project $project, Task $task, Comment $comment): JsonResponse
     {
         $this->authorize('delete', $comment);
 
@@ -86,7 +87,7 @@ class CommentController extends Controller
         ], 200);
     }
 
-    public function bulkDelete(BulkDeleteCommentRequest $request, Project $project, Task $task)
+    public function bulkDelete(BulkDeleteCommentRequest $request, Project $project, Task $task): JsonResponse
     {
         $validated = $request->validated();
 
