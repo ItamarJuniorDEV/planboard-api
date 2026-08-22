@@ -12,6 +12,7 @@ use App\Models\Subtask;
 use App\Models\Task;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 
 class SubtaskController extends Controller
 {
@@ -109,6 +110,10 @@ class SubtaskController extends Controller
                 ->update(['done' => true]);
         }
 
+        if ($completed > 0) {
+            Cache::forget("project:{$project->id}:stats");
+        }
+
         return response()->json([
             'success' => true,
             'message' => 'Operação concluída!',
@@ -136,6 +141,10 @@ class SubtaskController extends Controller
             $deleted = $task->subtasks()
                 ->whereIn('id', $foundIds)
                 ->delete();
+        }
+
+        if ($deleted > 0) {
+            Cache::forget("project:{$project->id}:stats");
         }
 
         return response()->json([

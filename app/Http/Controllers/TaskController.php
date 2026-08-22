@@ -14,6 +14,7 @@ use App\Models\Project;
 use App\Models\Task;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 
 class TaskController extends Controller
 {
@@ -199,12 +200,16 @@ class TaskController extends Controller
 
         $notFound = array_values(array_diff($validate['task_ids'], $foundIds));
 
-        $project->tasks()->whereIn('id', $foundIds)->delete();
+        $deleted = $project->tasks()->whereIn('id', $foundIds)->delete();
+
+        if ($deleted > 0) {
+            Cache::forget("project:{$project->id}:stats");
+        }
 
         return response()->json([
             'success' => true,
             'message' => 'Operação concluída!',
-            'deleted' => count($foundIds),
+            'deleted' => $deleted,
             'not_found' => $notFound,
         ], 200);
     }
