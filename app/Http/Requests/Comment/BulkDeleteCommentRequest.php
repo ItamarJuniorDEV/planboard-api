@@ -23,7 +23,7 @@ class BulkDeleteCommentRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'comment_ids' => ['required', 'array', 'min:1'],
+            'comment_ids' => ['required', 'array', 'min:1', 'max:100'],
             'comment_ids.*' => ['required', 'integer', 'distinct'],
         ];
     }

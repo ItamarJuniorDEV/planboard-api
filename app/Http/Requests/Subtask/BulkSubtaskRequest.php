@@ -23,7 +23,7 @@ class BulkSubtaskRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'subtask_ids' => ['required', 'array', 'min:1'],
+            'subtask_ids' => ['required', 'array', 'min:1', 'max:100'],
             'subtask_ids.*' => ['required', 'integer', 'distinct'],
         ];
     }

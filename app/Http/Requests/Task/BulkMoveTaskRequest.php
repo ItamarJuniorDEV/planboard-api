@@ -23,7 +23,7 @@ class BulkMoveTaskRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'task_ids' => ['required', 'array', 'min:1'],
+            'task_ids' => ['required', 'array', 'min:1', 'max:100'],
             'task_ids.*' => ['required', 'integer', 'distinct'],
             'column_id' => ['required', 'integer'],
         ];
