@@ -16,7 +16,7 @@ use Illuminate\Support\Facades\Route;
 
 Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:login');
 
-Route::middleware(['auth:sanctum', 'throttle:api'])->group(function () {
+Route::middleware(['auth:sanctum', 'throttle:api'])->group(function (): void {
 
     Route::post('/logout', [AuthController::class, 'logout']);
 
@@ -33,7 +33,7 @@ Route::middleware(['auth:sanctum', 'throttle:api'])->group(function () {
     Route::get('/projects/{project}/stats', [ProjectController::class, 'stats']);
 
     // boards
-    Route::scopeBindings()->group(function () {
+    Route::scopeBindings()->group(function (): void {
         Route::get('/projects/{project}/boards', [BoardController::class, 'index']);
         Route::get('/projects/{project}/boards/{board}', [BoardController::class, 'show']);
         Route::post('/projects/{project}/boards', [BoardController::class, 'store']);
@@ -50,7 +50,7 @@ Route::middleware(['auth:sanctum', 'throttle:api'])->group(function () {
     });
 
     // tasks scoped to project
-    Route::scopeBindings()->group(function () {
+    Route::scopeBindings()->group(function (): void {
         Route::patch('/projects/{project}/tasks/bulk-move', [TaskController::class, 'bulkMove']);
         Route::post('/projects/{project}/tasks/bulk-delete', [TaskController::class, 'bulkDelete']);
         Route::get('/projects/{project}/tasks', [TaskController::class, 'index']);
@@ -79,7 +79,7 @@ Route::middleware(['auth:sanctum', 'throttle:api'])->group(function () {
     });
 
     // milestones
-    Route::scopeBindings()->group(function () {
+    Route::scopeBindings()->group(function (): void {
         Route::get('/projects/{project}/milestones', [MilestoneController::class, 'index']);
         Route::get('/projects/{project}/milestones/{milestone}', [MilestoneController::class, 'show']);
         Route::post('/projects/{project}/milestones', [MilestoneController::class, 'store']);
@@ -88,7 +88,7 @@ Route::middleware(['auth:sanctum', 'throttle:api'])->group(function () {
     });
 
     // labels
-    Route::scopeBindings()->group(function () {
+    Route::scopeBindings()->group(function (): void {
         Route::get('/projects/{project}/labels', [LabelController::class, 'index']);
         Route::get('/projects/{project}/labels/{label}', [LabelController::class, 'show']);
         Route::post('/projects/{project}/labels', [LabelController::class, 'store']);
