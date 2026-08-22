@@ -66,6 +66,25 @@ class AuthorizationIsolationTest extends TestCase
             ->assertForbidden();
     }
 
+    public function test_usuario_nao_lista_recursos_aninhados_de_outro_usuario(): void
+    {
+        [$user, $foreignOwner, $foreignProject] = $this->foreignProject();
+        $foreignBoard = Board::factory()->for($foreignProject)->for($foreignOwner)->create();
+        $foreignTask = Task::factory()->for($foreignProject)->for($foreignOwner)->create();
+
+        $this->actingAs($user, 'sanctum')
+            ->getJson("/api/projects/{$foreignProject->id}/boards/{$foreignBoard->id}/columns")
+            ->assertForbidden();
+
+        $this->actingAs($user, 'sanctum')
+            ->getJson("/api/projects/{$foreignProject->id}/tasks/{$foreignTask->id}/subtasks")
+            ->assertForbidden();
+
+        $this->actingAs($user, 'sanctum')
+            ->getJson("/api/projects/{$foreignProject->id}/tasks/{$foreignTask->id}/comments")
+            ->assertForbidden();
+    }
+
     public function test_usuario_nao_cria_recursos_em_projeto_de_outro_usuario(): void
     {
         [$user, $foreignOwner, $foreignProject] = $this->foreignProject();
