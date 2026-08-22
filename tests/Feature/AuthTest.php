@@ -110,6 +110,22 @@ class AuthTest extends TestCase
         $response->assertStatus(429);
     }
 
+    public function test_token_de_login_expira_apos_oito_horas(): void
+    {
+        $user = User::factory()->create();
+
+        $token = $this->postJson('/api/login', [
+            'email' => $user->email,
+            'password' => 'password',
+        ])->assertOk()->json('token');
+
+        $this->travel(481)->minutes();
+
+        $this->withHeader('Authorization', 'Bearer '.$token)
+            ->getJson('/api/projects')
+            ->assertStatus(401);
+    }
+
     public function test_logout_invalida_token()
     {
         $user = User::factory()->create();
