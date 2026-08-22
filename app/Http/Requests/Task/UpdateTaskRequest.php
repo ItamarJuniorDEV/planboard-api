@@ -16,7 +16,7 @@ class UpdateTaskRequest extends FormRequest
     {
         return [
             'title' => ['required', 'string', 'max:255'],
-            'description' => ['nullable', 'string'],
+            'description' => ['nullable', 'string', 'max:5000'],
             'priority' => ['required', 'string', 'in:low,medium,high,urgent'],
             'status' => ['required', 'string', 'in:todo,doing,done'],
         ];

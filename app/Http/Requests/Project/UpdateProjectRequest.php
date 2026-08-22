@@ -16,7 +16,7 @@ class UpdateProjectRequest extends FormRequest
     {
         return [
             'title' => ['required', 'string', 'max:200'],
-            'description' => ['nullable', 'string'],
+            'description' => ['nullable', 'string', 'max:5000'],
             'budget' => ['required', 'numeric', 'min:0'],
             'status' => ['required', 'string', 'in:draft,planning,active,on_hold,completed,cancelled'],
             'deadline' => ['nullable', 'date'],
