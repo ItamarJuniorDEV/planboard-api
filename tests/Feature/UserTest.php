@@ -33,12 +33,12 @@ class UserTest extends TestCase
             ->assertJsonStructure(['data' => ['data', 'current_page', 'per_page']]);
     }
 
-    public function test_member_pode_listar_usuarios()
+    public function test_member_nao_pode_listar_usuarios()
     {
         $response = $this->actingAs($this->membro, 'sanctum')
             ->getJson('/api/users');
 
-        $response->assertOk();
+        $response->assertStatus(403);
     }
 
     public function test_admin_pode_criar_usuario()
@@ -57,7 +57,7 @@ class UserTest extends TestCase
 
     public function test_store_valida_email_unico()
     {
-        $existente = User::factory()->create(['email' => 'duplicado@example.com']);
+        User::factory()->create(['email' => 'duplicado@example.com']);
 
         $response = $this->actingAs($this->admin, 'sanctum')
             ->postJson('/api/users', [
