@@ -125,6 +125,23 @@ class UserTest extends TestCase
         $this->assertDatabaseHas('users', ['id' => $alvo->id, 'name' => 'Editado pelo admin']);
     }
 
+    public function test_admin_nao_pode_alterar_a_propria_role()
+    {
+        $response = $this->actingAs($this->admin, 'sanctum')
+            ->putJson("/api/users/{$this->admin->id}", [
+                'name' => $this->admin->name,
+                'email' => $this->admin->email,
+                'role' => 'member',
+            ]);
+
+        $response->assertStatus(422)
+            ->assertJsonValidationErrors(['role']);
+        $this->assertDatabaseHas('users', [
+            'id' => $this->admin->id,
+            'role' => 'admin',
+        ]);
+    }
+
     public function test_update_aceita_email_atual_do_usuario()
     {
         $alvo = User::factory()->create(['email' => 'mesmo@example.com']);
