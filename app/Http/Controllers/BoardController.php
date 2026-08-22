@@ -32,11 +32,12 @@ class BoardController extends Controller
         }
 
         $boards = $query->paginate($perPage);
+        $boards->through(fn (Board $board): array => (new BoardResource($board))->resolve());
 
         return response()->json([
             'success' => true,
             'message' => 'Quadros listados com sucesso!',
-            'data' => BoardResource::collection($boards)->resource,
+            'data' => $boards,
         ], 200);
     }
 

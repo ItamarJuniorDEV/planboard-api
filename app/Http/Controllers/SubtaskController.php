@@ -22,11 +22,12 @@ class SubtaskController extends Controller
         $perPage = $validate['per_page'] ?? 50;
 
         $subTasks = $task->subtasks()->paginate($perPage);
+        $subTasks->through(fn (Subtask $subtask): array => (new SubtaskResource($subtask))->resolve());
 
         return response()->json([
             'success' => true,
             'message' => 'Subtarefas listadas com sucesso!',
-            'data' => SubtaskResource::collection($subTasks)->resource,
+            'data' => $subTasks,
         ], 200);
     }
 

@@ -26,11 +26,12 @@ class LabelController extends Controller
         }
 
         $labels = $query->paginate($perPage);
+        $labels->through(fn (Label $label): array => (new LabelResource($label))->resolve());
 
         return response()->json([
             'success' => true,
             'message' => 'Etiquetas listadas com sucesso!',
-            'data' => LabelResource::collection($labels)->resource,
+            'data' => $labels,
         ], 200);
     }
 

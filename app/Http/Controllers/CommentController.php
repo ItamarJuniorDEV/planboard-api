@@ -22,11 +22,12 @@ class CommentController extends Controller
         $perPage = $validate['per_page'] ?? 50;
 
         $comments = $task->comments()->paginate($perPage);
+        $comments->through(fn (Comment $comment): array => (new CommentResource($comment))->resolve());
 
         return response()->json([
             'success' => true,
             'message' => 'Comentários listados com sucesso!',
-            'data' => CommentResource::collection($comments)->resource,
+            'data' => $comments,
         ], 200);
     }
 

@@ -19,11 +19,12 @@ class UserController extends Controller
         $perPage = $validated['per_page'] ?? 10;
 
         $users = User::paginate($perPage);
+        $users->through(fn (User $user): array => (new UserResource($user))->resolve());
 
         return response()->json([
             'success' => true,
             'message' => 'Usuários listados com sucesso!',
-            'data' => UserResource::collection($users)->resource,
+            'data' => $users,
         ], 200);
     }
 

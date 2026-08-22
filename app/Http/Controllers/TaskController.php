@@ -36,6 +36,8 @@ class TaskController extends Controller
             'description',
             'priority',
             'status',
+            'created_at',
+            'updated_at',
         ]);
 
         if (isset($validate['priority'])) {
@@ -52,11 +54,12 @@ class TaskController extends Controller
 
         $query->orderBy($orderBy, $direction);
         $tasks = $query->paginate($perPage);
+        $tasks->through(fn (Task $task): array => (new TaskResource($task))->resolve());
 
         return response()->json([
             'success' => true,
             'message' => 'Tarefas listadas com sucesso!',
-            'data' => TaskResource::collection($tasks)->resource,
+            'data' => $tasks,
         ], 200);
     }
 

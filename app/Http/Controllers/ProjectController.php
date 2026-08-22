@@ -29,6 +29,8 @@ class ProjectController extends Controller
             'budget',
             'status',
             'deadline',
+            'created_at',
+            'updated_at',
         ]);
 
         if (isset($validate['status'])) {
@@ -50,11 +52,12 @@ class ProjectController extends Controller
         $query->orderBy($orderBy, $direction);
 
         $projects = $query->paginate($perPage);
+        $projects->through(fn (Project $project): array => (new ProjectResource($project))->resolve());
 
         return response()->json([
             'success' => true,
             'message' => 'Projetos listados com sucesso!',
-            'data' => ProjectResource::collection($projects)->resource,
+            'data' => $projects,
         ], 200);
     }
 

@@ -40,11 +40,12 @@ class MilestoneController extends Controller
         $query->orderBy($orderBy, $direction);
 
         $milestones = $query->paginate($perPage);
+        $milestones->through(fn (Milestone $milestone): array => (new MilestoneResource($milestone))->resolve());
 
         return response()->json([
             'success' => true,
             'message' => 'Marcos listados com sucesso!',
-            'data' => MilestoneResource::collection($milestones)->resource,
+            'data' => $milestones,
         ], 200);
     }
 

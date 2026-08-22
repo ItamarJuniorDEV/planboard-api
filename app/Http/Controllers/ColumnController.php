@@ -21,11 +21,12 @@ class ColumnController extends Controller
         $perPage = $validated['per_page'] ?? 50;
 
         $columns = $board->columns()->paginate($perPage);
+        $columns->through(fn (Column $column): array => (new ColumnResource($column))->resolve());
 
         return response()->json([
             'success' => true,
             'message' => 'Colunas listadas com sucesso!',
-            'data' => ColumnResource::collection($columns)->resource,
+            'data' => $columns,
         ], 200);
     }
 
