@@ -7,12 +7,14 @@ use App\Http\Requests\Project\StoreProjectRequest;
 use App\Http\Requests\Project\UpdateProjectRequest;
 use App\Http\Resources\ProjectResource;
 use App\Models\Project;
+use App\Services\ProjectStatsService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Cache;
 
 class ProjectController extends Controller
 {
+    public function __construct(private readonly ProjectStatsService $stats) {}
+
     public function index(IndexProjectRequest $request): JsonResponse
     {
         $validate = $request->validated();
@@ -129,49 +131,9 @@ class ProjectController extends Controller
     {
         $this->authorize('view', $project);
 
-        $stats = Cache::remember("project:{$project->id}:stats", 60, function () use ($project) {
-            $tasksByStatus = $project->tasks()
-                ->selectRaw('status, count(*) as total')
-                ->groupBy('status')
-                ->get();
-
-            $tasksByPriority = $project->tasks()
-                ->selectRaw('priority, count(*) as total')
-                ->groupBy('priority')
-                ->get();
-
-            $subtasks = $project->tasks()
-                ->withCount([
-                    'subtasks',
-                    'subtasks as subtasks_done_count' => fn ($q) => $q->where('done', true),
-                ])
-                ->get();
-
-            $totalSubtasks = $subtasks->sum('subtasks_count');
-            $doneSubtasks = $subtasks->sum('subtasks_done_count');
-
-            $totalMilestones = $project->milestones()->count();
-            $overdueMilestones = $project->milestones()
-                ->whereDate('due_date', '<', now())
-                ->count();
-
-            return [
-                'tasks' => [
-                    'by_status' => $tasksByStatus,
-                    'by_priority' => $tasksByPriority,
-                ],
-                'subtasks' => [
-                    'total' => $totalSubtasks,
-                    'done' => $doneSubtasks,
-                    'pending' => $totalSubtasks - $doneSubtasks,
-                ],
-                'milestones' => [
-                    'total' => $totalMilestones,
-                    'overdue' => $overdueMilestones,
-                ],
-            ];
-        });
-
-        return response()->json(['success' => true] + $stats, 200);
+        return response()->json([
+            'success' => true,
+            ...$this->stats->get($project),
+        ], 200);
     }
 }

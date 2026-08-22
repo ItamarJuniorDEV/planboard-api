@@ -10,16 +10,17 @@ use App\Http\Resources\SubtaskResource;
 use App\Models\Project;
 use App\Models\Subtask;
 use App\Models\Task;
+use App\Services\ProjectStatsService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Cache;
 
 class SubtaskController extends Controller
 {
+    public function __construct(private readonly ProjectStatsService $stats) {}
+
     public function index(IndexSubtaskRequest $request, Project $project, Task $task): JsonResponse
     {
         $validate = $request->validated();
-
         $perPage = $validate['per_page'] ?? 50;
 
         $subTasks = $task->subtasks()->paginate($perPage);
@@ -92,14 +93,12 @@ class SubtaskController extends Controller
     public function bulkComplete(BulkSubtaskRequest $request, Project $project, Task $task): JsonResponse
     {
         $validate = $request->validated();
-
         $subtaskIds = $validate['subtask_ids'];
 
         $foundIds = $task->subtasks()
             ->whereIn('id', $subtaskIds)
             ->pluck('id')
             ->all();
-
         $notFound = array_values(array_diff($subtaskIds, $foundIds));
 
         $completed = 0;
@@ -111,7 +110,7 @@ class SubtaskController extends Controller
         }
 
         if ($completed > 0) {
-            Cache::forget("project:{$project->id}:stats");
+            $this->stats->invalidate($project->id);
         }
 
         return response()->json([
@@ -125,14 +124,12 @@ class SubtaskController extends Controller
     public function bulkDelete(BulkSubtaskRequest $request, Project $project, Task $task): JsonResponse
     {
         $validate = $request->validated();
-
         $subtaskIds = $validate['subtask_ids'];
 
         $foundIds = $task->subtasks()
             ->whereIn('id', $subtaskIds)
             ->pluck('id')
             ->all();
-
         $notFound = array_values(array_diff($subtaskIds, $foundIds));
 
         $deleted = 0;
@@ -144,7 +141,7 @@ class SubtaskController extends Controller
         }
 
         if ($deleted > 0) {
-            Cache::forget("project:{$project->id}:stats");
+            $this->stats->invalidate($project->id);
         }
 
         return response()->json([

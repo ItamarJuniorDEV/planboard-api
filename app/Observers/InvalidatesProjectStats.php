@@ -5,10 +5,12 @@ namespace App\Observers;
 use App\Models\Milestone;
 use App\Models\Subtask;
 use App\Models\Task;
-use Illuminate\Support\Facades\Cache;
+use App\Services\ProjectStatsService;
 
 class InvalidatesProjectStats
 {
+    public function __construct(private readonly ProjectStatsService $stats) {}
+
     public function saved(Task|Subtask|Milestone $model): void
     {
         $this->invalidate($model);
@@ -22,13 +24,13 @@ class InvalidatesProjectStats
     private function invalidate(Task|Subtask|Milestone $model): void
     {
         $projectId = $model instanceof Subtask
-            ? $model->task()->first()?->project_id
+            ? $model->task()->value('project_id')
             : $model->project_id;
 
         if ($projectId === null) {
             return;
         }
 
-        Cache::forget("project:{$projectId}:stats");
+        $this->stats->invalidate((int) $projectId);
     }
 }

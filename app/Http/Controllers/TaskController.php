@@ -12,12 +12,14 @@ use App\Http\Resources\TaskResource;
 use App\Models\Column;
 use App\Models\Project;
 use App\Models\Task;
+use App\Services\ProjectStatsService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Cache;
 
 class TaskController extends Controller
 {
+    public function __construct(private readonly ProjectStatsService $stats) {}
+
     public function index(IndexTaskRequest $request, Project $project): JsonResponse
     {
         $this->authorize('view', $project);
@@ -132,7 +134,6 @@ class TaskController extends Controller
         $validate = $request->validated();
 
         $column = Column::find($validate['column_id']);
-
         $board = $project->boards()->find($column->board_id);
 
         if (! $board) {
@@ -175,9 +176,7 @@ class TaskController extends Controller
         }
 
         $tasks = $project->tasks()->whereIn('id', $validate['task_ids'])->get();
-
         $foundIds = $tasks->pluck('id')->all();
-
         $notFound = array_values(array_diff($validate['task_ids'], $foundIds));
 
         $project->tasks()->whereIn('id', $foundIds)->update(['column_id' => $column->id]);
@@ -195,15 +194,13 @@ class TaskController extends Controller
         $validate = $request->validated();
 
         $tasks = $project->tasks()->whereIn('id', $validate['task_ids'])->get();
-
         $foundIds = $tasks->pluck('id')->all();
-
         $notFound = array_values(array_diff($validate['task_ids'], $foundIds));
 
         $deleted = $project->tasks()->whereIn('id', $foundIds)->delete();
 
         if ($deleted > 0) {
-            Cache::forget("project:{$project->id}:stats");
+            $this->stats->invalidate($project->id);
         }
 
         return response()->json([
