@@ -11,6 +11,7 @@ class UpdateTaskRequest extends FormRequest
         return $this->user()->can('update', $this->route('task'));
     }
 
+    /** @return array<string, mixed> */
     public function rules(): array
     {
         return [

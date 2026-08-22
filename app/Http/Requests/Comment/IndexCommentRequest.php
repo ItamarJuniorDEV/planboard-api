@@ -12,6 +12,7 @@ class IndexCommentRequest extends FormRequest
         return $this->user()->can('viewAny', Comment::class);
     }
 
+    /** @return array<string, mixed> */
     public function rules(): array
     {
         return [

@@ -12,6 +12,7 @@ class BulkSubtaskRequest extends FormRequest
         return $this->user()->can('viewAny', Subtask::class);
     }
 
+    /** @return array<string, mixed> */
     public function rules(): array
     {
         return [

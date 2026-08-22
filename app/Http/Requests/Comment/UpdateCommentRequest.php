@@ -11,6 +11,7 @@ class UpdateCommentRequest extends FormRequest
         return $this->user()->can('update', $this->route('comment'));
     }
 
+    /** @return array<string, mixed> */
     public function rules(): array
     {
         return [

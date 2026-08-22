@@ -12,6 +12,7 @@ class IndexLabelRequest extends FormRequest
         return $this->user()->can('viewAny', Label::class);
     }
 
+    /** @return array<string, mixed> */
     public function rules(): array
     {
         return [

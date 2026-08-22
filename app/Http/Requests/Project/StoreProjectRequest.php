@@ -12,6 +12,7 @@ class StoreProjectRequest extends FormRequest
         return $this->user()->can('create', Project::class);
     }
 
+    /** @return array<string, mixed> */
     public function rules(): array
     {
         return [

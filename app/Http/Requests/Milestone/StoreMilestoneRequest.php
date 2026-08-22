@@ -12,6 +12,7 @@ class StoreMilestoneRequest extends FormRequest
         return $this->user()->can('create', Milestone::class);
     }
 
+    /** @return array<string, mixed> */
     public function rules(): array
     {
         return [

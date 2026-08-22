@@ -12,6 +12,7 @@ class IndexColumnRequest extends FormRequest
         return $this->user()->can('viewAny', Column::class);
     }
 
+    /** @return array<string, mixed> */
     public function rules(): array
     {
         return [

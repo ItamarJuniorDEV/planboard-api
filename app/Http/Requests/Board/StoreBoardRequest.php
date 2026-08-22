@@ -12,6 +12,7 @@ class StoreBoardRequest extends FormRequest
         return $this->user()->can('create', Board::class);
     }
 
+    /** @return array<string, mixed> */
     public function rules(): array
     {
         return [

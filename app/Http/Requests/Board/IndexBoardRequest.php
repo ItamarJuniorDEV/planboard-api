@@ -12,6 +12,7 @@ class IndexBoardRequest extends FormRequest
         return $this->user()->can('viewAny', Board::class);
     }
 
+    /** @return array<string, mixed> */
     public function rules(): array
     {
         return [

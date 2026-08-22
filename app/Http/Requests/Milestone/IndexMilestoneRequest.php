@@ -12,6 +12,7 @@ class IndexMilestoneRequest extends FormRequest
         return $this->user()->can('viewAny', Milestone::class);
     }
 
+    /** @return array<string, mixed> */
     public function rules(): array
     {
         return [

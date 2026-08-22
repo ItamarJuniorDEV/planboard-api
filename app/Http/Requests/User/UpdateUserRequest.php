@@ -11,6 +11,7 @@ class UpdateUserRequest extends FormRequest
         return $this->user()->can('update', $this->route('user'));
     }
 
+    /** @return array<string, mixed> */
     public function rules(): array
     {
         $userId = $this->route('user')?->id;
