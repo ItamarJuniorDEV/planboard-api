@@ -35,7 +35,7 @@ class AppServiceProvider extends ServiceProvider
             ->routes(function (Route $route) {
                 return str_starts_with($route->uri(), 'api/');
             })
-            ->withDocumentTransformers(function (OpenApi $openApi) {
+            ->withDocumentTransformers(function (OpenApi $openApi): void {
                 $openApi->secure(
                     SecurityScheme::http('bearer')
                 );
